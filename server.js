@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { fetch } from "undici";
 
 dotenv.config();
 
@@ -11,11 +12,12 @@ app.use(express.json());
 const LIVEPEER_API_KEY = process.env.LIVEPEER_API_KEY;
 const STREAM_ID = process.env.LIVEPEER_STREAM_ID;
 
+// KEEP SERVER ALIVE (Render requirement)
 app.get("/", (req, res) => {
-  res.send("Livepeer backend running ✅");
+  res.status(200).send("Livepeer backend running ✅");
 });
 
-// STEP 1: Create WebRTC broadcast session
+// Create WebRTC broadcast session
 app.post("/webrtc/start", async (req, res) => {
   try {
     const response = await fetch(
@@ -38,7 +40,7 @@ app.post("/webrtc/start", async (req, res) => {
   }
 });
 
-// STEP 2: SDP exchange
+// SDP exchange
 app.post("/webrtc/sdp", async (req, res) => {
   try {
     const { sdp, sessionId } = req.body;
@@ -63,9 +65,12 @@ app.post("/webrtc/sdp", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
+
+// 🚨 THIS LINE IS CRITICAL
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
 
 
