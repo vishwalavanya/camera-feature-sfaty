@@ -11,12 +11,6 @@ app.use(express.json());
 const LIVEPEER_API_KEY = process.env.LIVEPEER_API_KEY;
 const STREAM_ID = process.env.LIVEPEER_STREAM_ID;
 
-// 🔎 Safety check (prevents silent crash)
-if (!LIVEPEER_API_KEY || !STREAM_ID) {
-  console.error("❌ Missing environment variables");
-  process.exit(1);
-}
-
 app.get("/", (req, res) => {
   res.send("Livepeer backend running ✅");
 });
@@ -32,16 +26,14 @@ app.post("/webrtc/start", async (req, res) => {
           Authorization: `Bearer ${LIVEPEER_API_KEY}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          streamId: STREAM_ID
-        })
+        body: JSON.stringify({ streamId: STREAM_ID })
       }
     );
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error(err);
+    console.error("START ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -66,7 +58,7 @@ app.post("/webrtc/sdp", async (req, res) => {
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error(err);
+    console.error("SDP ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -75,4 +67,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
 
