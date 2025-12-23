@@ -1,7 +1,6 @@
 {
   "name": "camera-feature-safety",
   "version": "1.0.0",
-  "description": "Livepeer WebRTC backend for camera streaming",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -13,8 +12,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "undici": "^6.19.8"
   }
 }
-
-
