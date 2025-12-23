@@ -10,8 +10,6 @@ app.use(cors());
 app.use(express.json());
 
 const LIVEPEER_API_KEY = process.env.LIVEPEER_API_KEY;
-const STREAM_ID = process.env.LIVEPEER_STREAM_ID;
-
 const PORT = process.env.PORT || 10000;
 
 // Health check
@@ -19,60 +17,39 @@ app.get("/", (req, res) => {
   res.send("Livepeer backend running ✅");
 });
 
-// STEP 1: Create WebRTC broadcast session
+/**
+ * STEP 1: Create a Livepeer stream
+ * This returns ingestUrl + streamKey
+ * Frontend will use Livepeer WebRTC client
+ */
 app.post("/webrtc/start", async (req, res) => {
   try {
-    const response = await fetch(
-      "https://livepeer.studio/api/webrtc/broadcast",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LIVEPEER_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ streamId: STREAM_ID })
-      }
-    );
-
-    const data = await response.json();
-
-    // 🔥 Normalize response for frontend
-    res.json({
-      sessionId: data.sessionId,
-      offer: {
-        type: "offer",
-        sdp: data.sdp
+    const response = await fetch("https://livepeer.studio/api/stream", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LIVEPEER_API_KEY}`,
+        "Content-Type": "application/json"
       },
-      iceServers: data.iceServers
+      body: JSON.stringify({
+        name: "browser-camera-stream"
+      })
     });
-  } catch (err) {
-    console.error("START ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// STEP 2: SDP exchange
-app.post("/webrtc/sdp", async (req, res) => {
-  try {
-    const { sdp, sessionId } = req.body;
-
-    const response = await fetch(
-      `https://livepeer.studio/api/webrtc/broadcast/${sessionId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LIVEPEER_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ sdp })
-      }
-    );
 
     const data = await response.json();
-    res.json(data);
+
+    if (!data.streamKey) {
+      return res.status(500).json({ error: "Failed to create stream" });
+    }
+
+    // 🔥 This is ALL the frontend needs
+    res.json({
+      ingestUrl: "https://webrtc.livepeer.studio",
+      streamKey: data.streamKey,
+      playbackId: data.playbackId
+    });
+
   } catch (err) {
-    console.error("SDP ERROR:", err);
+    console.error("STREAM CREATE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -80,6 +57,7 @@ app.post("/webrtc/sdp", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
 
 
 
