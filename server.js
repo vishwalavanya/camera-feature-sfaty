@@ -35,12 +35,22 @@ app.post("/webrtc/start", async (req, res) => {
     );
 
     const data = await response.json();
-    res.json(data);
+
+    // 🔥 Normalize response for frontend
+    res.json({
+      sessionId: data.sessionId,
+      offer: {
+        type: "offer",
+        sdp: data.sdp
+      },
+      iceServers: data.iceServers
+    });
   } catch (err) {
     console.error("START ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // STEP 2: SDP exchange
 app.post("/webrtc/sdp", async (req, res) => {
