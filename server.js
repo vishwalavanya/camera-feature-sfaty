@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -12,9 +11,14 @@ app.use(express.json());
 const LIVEPEER_API_KEY = process.env.LIVEPEER_API_KEY;
 const STREAM_ID = process.env.LIVEPEER_STREAM_ID;
 
-// Health check
+// 🔎 Safety check (prevents silent crash)
+if (!LIVEPEER_API_KEY || !STREAM_ID) {
+  console.error("❌ Missing environment variables");
+  process.exit(1);
+}
+
 app.get("/", (req, res) => {
-  res.send("Livepeer backend running");
+  res.send("Livepeer backend running ✅");
 });
 
 // STEP 1: Create WebRTC broadcast session
@@ -35,18 +39,14 @@ app.post("/webrtc/start", async (req, res) => {
     );
 
     const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(500).json(data);
-    }
-
     res.json(data);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// STEP 2: Send SDP offer → get SDP answer
+// STEP 2: SDP exchange
 app.post("/webrtc/sdp", async (req, res) => {
   try {
     const { sdp, sessionId } = req.body;
@@ -64,18 +64,15 @@ app.post("/webrtc/sdp", async (req, res) => {
     );
 
     const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(500).json(data);
-    }
-
     res.json(data);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
+
